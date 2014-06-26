@@ -1,46 +1,124 @@
+<?xml version="1.0"?>
+<!-- ====================================================================== 
+     A collection of Box related tasks (www.ortussolutions.com)                                                             
+     ====================================================================== -->
 <project name="box-repo-tasks">
+	<description>
+	These tasks rely on the ANTContrib jar tasks to be loaded already
+	</description>
+	
 	<!-- Create Box Repo Task -->
-	<macrodef name="box-repo">
-	<attribute name="location" />
-	<attribute name="artifactID"/>
-	<attribute name="groupID"/>
-	<attribute name="latest"/>
-	<attribute name="classifiers" default=""/>
-	<sequential>
-		<tstamp prefix="repo.timestamp"/>
-		<!-- Get repo versions -->
-		<var name="versions" value="" />
-		<for param="directory">
-			<dirset dir="@{location}">
-				<include name="*" />
-			</dirset>
-			<sequential>
-				<propertyregex input="@{directory}" select="\1" regexp=".*/(.*)$"  property="tmpDirName" override="true"></propertyregex>
-				<if>
-					<equals arg1="${versions}" arg2=""/>
-					<then>
-						<var name="versions" value="${tmpDirName}" />
-					</then>
-					<else>
-						<var name="versions" value="${versions},${tmpDirName}" />
-					</else>
-				</if>
-			</sequential>
-		</for>
-<!-- Setup Box-Repo -->
-<echo file="@{location}/box-repo.json">
-{
+	<macrodef name="box-repo" description="Creates a box-repo.json that represents a file repository of artifacts">
+		<attribute name="location" 		description="The location of the box-repo.json and artifacts"/>
+		<attribute name="artifactID" 	description="The artifactID to use"/>
+		<attribute name="groupID"		description="The groupID to use"/>
+		<attribute name="buildID" 		description="The buildID to attach, if not we default it to 0000" default="00000"/>
+		<attribute name="latest"		description="This should be the version in semantic format major.minor.patch of the latest build"/>
+		<attribute name="classifiers" 	description="A list of classifiers this artifact contains, basically other downloads associated with it" default=""/>
+		<sequential>
+			<tstamp prefix="repo.timestamp"/>
+			<!-- Get repo versions -->
+			<var name="versions" value="" />
+			<for param="directory">
+				<dirset dir="@{location}">
+					<include name="*" />
+				</dirset>
+				<sequential>
+					<propertyregex input="@{directory}" select="\1" regexp=".*/(.*)$"  property="tmpDirName" override="true"></propertyregex>
+					<if>
+						<equals arg1="${versions}" arg2=""/>
+						<then>
+							<var name="versions" value="${tmpDirName}" />
+						</then>
+						<else>
+							<var name="versions" value="${versions},${tmpDirName}" />
+						</else>
+					</if>
+				</sequential>
+			</for>
+<!-- Setup Box-Repo.json -->
+<concat destfile="@{location}/box-repo.json" overwrite="true">{
 	"artifactID" : "@{artifactID}",
 	"groupID" : "@{groupID}",
 	"versioning" : {
 		"latest" : "@{latest}",
+		"buildID" : "@{buildID}",
 		"latestUpdated" : "${repo.timestamp.DSTAMP}${repo.timestamp.TSTAMP}",
 		"versions" : "${versions}",
 		"classifiers" : "@{classifiers}"
 	}
-}
-</echo>
-	<echo>@{location}/box.repo.json created!</echo>
-	</sequential>
+}</concat>
+		<echo>@{location}/box.repo.json created!</echo>
+		</sequential>
+	</macrodef>
+	
+	<!-- Create Box Repo Task -->
+	<macrodef name="box-dependency" description="Gets dependencies from box repos if not found in local cache. Location pattern is: /groupid/artifactid/version/artifactid-classifiers-version.extension">
+		<!-- TODO: add checksums -->
+		<attribute name="artifactID" 	description="The artifactID to use"/>
+		<attribute name="groupID"		description="The groupID to use" default=""/>
+		<attribute name="version"		description="This should be the version in semantic format major.minor.patch of the dependency to get"/>
+		<attribute name="extension" 	description="The extension of the dependency, defaults to .zip" default="zip"/>
+		<attribute name="destination"	description="Where you want to store the dependency once downloaded and verified"/>
+		<attribute name="classifiers" 	description="The classifier you want to download" default=""/>
+		<attribute name="separator"		description="The separator to use for artifacts, versions and classifiers" default="-" />
+		<attribute name="repoURL"		description="The repoURLs to use for downloads, if empty, we look for a box.repo.url property" default="" />
+		<attribute name="unzip"			description="Unzip the atifact once downloaded" default="false"/>
+		<attribute name="removeZip"		description="If true, removes the file once expanded if 'unzip=true'" default="true"/>
+		<sequential>
+			<!-- make directory if not exists -->
+			<mkdir dir="@{destination}"  />
+			<!-- determine repo URL -->
+			<var name="downloadURL" value="@{repoURL}" />
+			<if>
+				<equals arg1="${downloadURL}" arg2="" />
+				<then>
+					<if><not><isset property="box.repo.url" /></not><then><fail message="Cannot continue: box.repo.url and repoURL not set" /></then></if>
+					<var name="downloadURL" value="${box.repo.url}" />
+				</then>
+			</if>
+			<!-- name determination -->
+			<var name="dependencyName" value="@{artifactID}" />
+			<!-- do we have classifiers -->
+			<if>
+				<not><equals arg1="@{classifiers}" arg2="" /></not>
+				<then><var name="dependencyName" value="${dependencyName}@{separator}@{classifiers}@{separator}@{version}.@{extension}" /></then>
+				<else><var name="dependencyName" value="${dependencyName}@{separator}@{version}.@{extension}" /></else>
+			</if>
+			<echo>Checking for dependency: ${dependencyName} in @{destination}</echo>
+			<!-- check if file exists already in destination -->
+			<if>
+		        <available file="@{destination}/${dependencyName}" />
+		        <then><echo>${dependencyName} dependency found!</echo></then>
+		        <else>
+		            <echo>${dependencyName} not found, getting artifact from ${downloadURL}</echo>
+		        	<!-- prepare dependency URI location -->
+		        	<if>
+		        		<equals arg1="@{groupID}" arg2="" />
+		        		<then><var name="dependencyURI" value="@{artifactID}/@{version}/${dependencyName}" /></then>
+		        		<else><var name="dependencyURI" value="@{groupID}/@{artifactID}/@{version}/${dependencyName}" /></else>
+		        	</if>
+		        	<!-- Get the dependency -->
+					<get src="${downloadURL}/${dependencyURI}" 
+						 dest="@{destination}"
+						 verbose="true"
+						 retries="2"
+		        		 maxtime="0"/>
+		        	<echo>${dependencyName} downloaded to @{destination}</echo>
+		        	<!-- Check if we Unzip, downloaded artifact -->
+		        	<if>
+		        		<equals arg1="@{unzip}" arg2="true" />
+		        		<then>
+		        			<unzip dest="@{destination}" overwrite="true" src="@{destination}/${dependencyName}" />
+		        			<!-- remove if saying so -->
+		        			<if>
+    			        		<equals arg1="@{removeZip}" arg2="true" />
+    			        		<then><delete fie="@{destination}/${dependencyName}" /></then>
+    			        	</if>
+		        		</then>
+		        	</if>
+		        </else>
+		    </if>
+		</sequential>
 	</macrodef>
 </project>
