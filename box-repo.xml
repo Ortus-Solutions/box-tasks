@@ -12,7 +12,7 @@
 		<attribute name="location" 		description="The location of the box-repo.json and artifacts"/>
 		<attribute name="artifactID" 	description="The artifactID to use"/>
 		<attribute name="groupID"		description="The groupID to use"/>
-		<attribute name="buildID" 		description="The buildID to attach, if not we default it to 0000" default="00000"/>
+		<attribute name="buildID" 		description="The buildID of the latest build.  We default it to 0000" default="00000"/>
 		<attribute name="latest"		description="This should be the version in semantic format major.minor.patch of the latest build"/>
 		<attribute name="classifiers" 	description="A list of classifiers this artifact contains, basically other downloads associated with it" default=""/>
 		<sequential>
@@ -24,14 +24,14 @@
 					<include name="*" />
 				</dirset>
 				<sequential>
-					<propertyregex input="@{directory}" select="\1" regexp=".*/(.*)$"  property="tmpDirName" override="true"></propertyregex>
+					<propertyregex input="@{directory}" select="\1" regexp=".*[\\/](.*)$"  property="tmpDirName" override="true"></propertyregex>
 					<if>
 						<equals arg1="${versions}" arg2=""/>
 						<then>
-							<var name="versions" value="${tmpDirName}" />
+							<var name="versions" value="&quot;${tmpDirName}&quot;" />
 						</then>
 						<else>
-							<var name="versions" value="${versions},${tmpDirName}" />
+							<var name="versions" value="${versions},&quot;${tmpDirName}&quot;" />
 						</else>
 					</if>
 				</sequential>
@@ -41,10 +41,10 @@
 	"artifactID" : "@{artifactID}",
 	"groupID" : "@{groupID}",
 	"versioning" : {
-		"latest" : "@{latest}",
-		"buildID" : "@{buildID}",
+		"latestVersion" : "@{latest}",
+		"latestBuildID" : "@{buildID}",
 		"latestUpdated" : "${repo.timestamp.DSTAMP}${repo.timestamp.TSTAMP}",
-		"versions" : "${versions}",
+		"versions" : [${versions}],
 		"classifiers" : "@{classifiers}"
 	}
 }</concat>
