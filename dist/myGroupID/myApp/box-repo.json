@@ -1,0 +1,12 @@
+{
+	"artifactID" : "myApp",
+	"groupID" : "myGroupID",
+	"versioning" : {
+		"latestVersion" : "2.0.0",
+		"latestBuildID" : "123456",
+		"latestUpdated" : "201408132211",
+		"stableVersion" : "1.5.2",
+		"versions" : ["1.0.0","1.5.0","1.5.2","2.0.0"],
+		"classifiers" : "classifier,anotherClassifier"
+	}
+}

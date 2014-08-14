@@ -14,8 +14,10 @@
 		<attribute name="groupID"		description="The groupID to use"/>
 		<attribute name="buildID" 		description="The buildID of the latest build.  We default it to 0000" default="00000"/>
 		<attribute name="latest"		description="This should be the version in semantic format major.minor.patch of the latest build"/>
+		<attribute name="stableVersion"	description="This should be the version in semantic format major.minor.patch of the last stable build" default="@{latest}"/>
 		<attribute name="classifiers" 	description="A list of classifiers this artifact contains, basically other downloads associated with it" default=""/>
 		<sequential>
+			<echo>@{stableVersion}</echo>
 			<tstamp prefix="repo.timestamp"/>
 			<!-- Get repo versions -->
 			<var name="versions" value="" />
@@ -44,6 +46,7 @@
 		"latestVersion" : "@{latest}",
 		"latestBuildID" : "@{buildID}",
 		"latestUpdated" : "${repo.timestamp.DSTAMP}${repo.timestamp.TSTAMP}",
+		"stableVersion" : "@{stableVersion}",
 		"versions" : [${versions}],
 		"classifiers" : "@{classifiers}"
 	}

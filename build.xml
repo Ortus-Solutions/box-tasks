@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<!-- ====================================================================== 
+     Test Build for developing on the box-repo tasks
+     ====================================================================== -->
+<project name="test-build" default="build.test" basedir="./">
+	<description>
+    	Test Build for developing on the box-repo tasks
+    </description>
+	
+	<!-- UPDATE ON EACH VERSION CYCLE -->
+	<property name="groupID"	value="myGroupID" />
+	<property name="version" 	value="2.0.0" />
+	<property name="stableVersion" 	value="1.5.2" />
+	<property name="buildID" 	value="123456" />
+	<property name="slug"	 	value="myApp"/>
+	
+	<!-- Load Contrib Tasks -->
+	<path id="cp">
+		<fileset dir="lib">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+	<!-- Define Tasks -->
+	<taskdef resource="net/sf/antcontrib/antlib.xml" classpathref="cp" />
+	<!-- Import Box-Repo Tasks -->
+	<import file="box-repo.xml" />
+	 	
+	<target name="build.test">
+		
+		<property name="outputDirectory" value="dist/${groupID}/${slug}" />
+		<mkdir dir="${outputDirectory}" />
+		
+		<box-repo location="${outputDirectory}"
+				  artifactID="${slug}" 
+				  groupID="${groupID}"
+				  buildID="${buildID}"
+				  latest="${version}"
+				  stableVersion="${stableVersion}"
+				  classifiers="classifier,anotherClassifier"/>
+		
+    </target>
+	
+</project>
