@@ -118,7 +118,7 @@
 		        			<if>
     			        		<equals arg1="@{removeZip}" arg2="true" />
     			        		<then>
-    			        			<delete fie="@{destination}/${dependencyName}" verbose="true" />
+    			        			<delete file="@{destination}/${dependencyName}" verbose="true" />
     			        		</then>
     			        	</if>
 		        		</then>
