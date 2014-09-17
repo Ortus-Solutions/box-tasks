@@ -112,11 +112,14 @@
 		        	<if>
 		        		<equals arg1="@{unzip}" arg2="true" />
 		        		<then>
+		        			<echo>Unzipping ${dependencyName} at @{destination}</echo>
 		        			<unzip dest="@{destination}" overwrite="true" src="@{destination}/${dependencyName}" />
 		        			<!-- remove if saying so -->
 		        			<if>
     			        		<equals arg1="@{removeZip}" arg2="true" />
-    			        		<then><delete fie="@{destination}/${dependencyName}" /></then>
+    			        		<then>
+    			        			<delete fie="@{destination}/${dependencyName}" verbose="true" />
+    			        		</then>
     			        	</if>
 		        		</then>
 		        	</if>
