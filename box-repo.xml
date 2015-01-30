@@ -9,6 +9,7 @@
 	
 	<!-- Create Box Repo Task -->
 	<macrodef name="box-repo" description="Creates a box-repo.json that represents a file repository of artifacts">
+		<attribute name="filename" 		description="The name of the repo file to create, defaults to box-repo.json" default="box-repo.json"/>
 		<attribute name="location" 		description="The location of the box-repo.json and artifacts"/>
 		<attribute name="artifactID" 	description="The artifactID to use"/>
 		<attribute name="groupID"		description="The groupID to use"/>
@@ -39,7 +40,7 @@
 				</sequential>
 			</for>
 <!-- Setup Box-Repo.json -->
-<concat destfile="@{location}/box-repo.json" overwrite="true">{
+<concat destfile="@{location}/@{filename}" overwrite="true">{
 	"artifactID" : "@{artifactID}",
 	"groupID" : "@{groupID}",
 	"versioning" : {
@@ -51,7 +52,7 @@
 		"classifiers" : "@{classifiers}"
 	}
 }</concat>
-		<echo>@{location}/box.repo.json created!</echo>
+		<echo>@{location}/@{filename} created!</echo>
 		</sequential>
 	</macrodef>
 	
