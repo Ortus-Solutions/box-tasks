@@ -57,7 +57,7 @@
 	</macrodef>
 	
 	<!-- Create Box Repo Task -->
-	<macrodef name="box-dependency" description="Gets dependencies from box repos if not found in local cache. Location pattern is: /groupid/artifactid/version/artifactid-classifiers-version.extension">
+	<macrodef name="box-dependency" description="Gets dependencies from file repos if not found in local cache. Location pattern is: /groupid/artifactid/version/artifactid-classifiers-version.extension">
 		<!-- TODO: add checksums -->
 		<attribute name="artifactID" 	description="The artifactID to use"/>
 		<attribute name="groupID"		description="The groupID to use" default=""/>
@@ -69,6 +69,7 @@
 		<attribute name="repoURL"		description="The repoURLs to use for downloads, if empty, we look for a box.repo.url property" default="" />
 		<attribute name="unzip"			description="Unzip the atifact once downloaded" default="false"/>
 		<attribute name="removeZip"		description="If true, removes the file once expanded if 'unzip=true'" default="true"/>
+		<attribute name="versionFirst"	description="If true, then it switches the version first instead of classifiers" default="false"/>
 		<sequential>
 			<!-- make directory if not exists -->
 			<mkdir dir="@{destination}"  />
@@ -86,8 +87,22 @@
 			<!-- do we have classifiers -->
 			<if>
 				<not><equals arg1="@{classifiers}" arg2="" /></not>
-				<then><var name="dependencyName" value="${dependencyName}@{separator}@{classifiers}@{separator}@{version}.@{extension}" /></then>
-				<else><var name="dependencyName" value="${dependencyName}@{separator}@{version}.@{extension}" /></else>
+				<then>
+					<if>
+						<equals arg1="@{versionFirst}" arg2="true" />
+						<then>
+							<var name="dependencyName" 
+						 		 value="${dependencyName}@{separator}@{version}@{separator}@{classifiers}.@{extension}" />
+						</then>
+						<else>
+							<var name="dependencyName" 
+						 		 value="${dependencyName}@{separator}@{classifiers}@{separator}@{version}.@{extension}" />
+						</else>
+					</if>
+				</then>
+				<else>
+					<var name="dependencyName" value="${dependencyName}@{separator}@{version}.@{extension}" />
+				</else>
 			</if>
 			<echo>Checking for dependency: ${dependencyName} in @{destination}</echo>
 			<!-- check if file exists already in destination -->
